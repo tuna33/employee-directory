@@ -1,11 +1,27 @@
 import React, { useEffect, useState } from "react";
+import { render, RenderResult } from "@testing-library/react";
+import { MemoryRouter, Route } from "react-router-dom";
+import { QueryParamProvider } from "use-query-params";
+import App from "../components/App";
 import { Department, Employee } from "../types";
 
+// Thanks to https://github.com/miragejs/tutorial/blob/master/src/lib/test-helpers.js
+export function visit(url: string, toTestPage: boolean): RenderResult {
+  return render(  
+    <MemoryRouter initialEntries={[url]}>
+      <QueryParamProvider ReactRouterRoute={Route}>
+        {!toTestPage && <App />}
+        {toTestPage && <Testbench />}
+      </QueryParamProvider>
+    </MemoryRouter>
+  );
+}
+
 /**
- * A TestPage exclusively meant for running tests
- * @returns Test Page component
+ * A Testbench exclusively meant for running tests
+ * @returns Test bench component
  */
-const TestPage: React.FC = () => {
+ const Testbench: React.FC = () => {
   /**
    * Employee, Department, and Loading state are all coupled together
    * We represent that abstraction as "companyData"
@@ -86,5 +102,3 @@ const TestPage: React.FC = () => {
     </div>
   );
 };
-
-export default TestPage;

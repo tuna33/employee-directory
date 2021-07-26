@@ -159,21 +159,58 @@ export default async (environment = "development") : Promise<Server> => {
 
         /**
          * Create a department
+         * Note: only the info object's body should be in the request's body
          */
         this.post("/departments", (schema, request) => {
           const requiredFields = ["name"];
-          const invalidFields = ["id"];
           const body = request.requestBody;
           if(body === null)
             return new Response(400, {ErrorType: "Exclusion"}, {errors: requiredFields});
           
           const payload = JSON.parse(body);
-          const response = getPayloadResponse(payload, requiredFields, invalidFields);
+          const response = getPayloadResponse(payload, requiredFields);
           if(response !== null)
             return response;
 
           // Payload is valid, so deliver it
-          return schema.create("employee", payload);
+          return schema.create("department", {info: payload});
+        });
+
+        /**
+         * Delete a department
+         */
+        this.delete("/departments/:id", (schema, request) => {
+          const id = request.params.id;
+          const department = schema.find("department", id);
+          if(!department)
+            return new Response(400, {ErrorType: "Invalid"}, {errors: ["id"]});
+          department.destroy();
+          return department;
+        });
+
+        /**
+         * Update a department
+         * Note: only the info object's body should be in the request's body
+         */
+        this.put("/departments/:id", (schema, request) => {
+          const id = request.params.id;
+          const requiredFields = ["name"];
+          const body = request.requestBody;
+          if(body === null)
+            return new Response(400, {ErrorType: "Exclusion"}, {errors: requiredFields});
+          
+          const payload = JSON.parse(body);
+          const response = getPayloadResponse(payload, requiredFields);
+          if(response !== null)
+            return response;
+          
+          const department = schema.find("department", id);
+          if(!department)
+            return new Response(400, {ErrorType: "Invalid"}, {errors: ["id"]});
+          
+          // Payload is valid, so update
+          department.update("info", payload);
+          return department;
         });
       },
     });
