@@ -1,6 +1,8 @@
-import { belongsTo, createServer, Factory, hasMany, Model, Registry, RestSerializer, Server, Response } from "miragejs";
+import { belongsTo, createServer, Factory, hasMany, Model, Registry, RestSerializer, Server, Instantiate } from "miragejs";
+import Schema from "miragejs/orm/schema";
 import { DepartmentInfo, EmployeeInfo } from "./types";
-import { getPayloadResponse, getRandomEmployeesInfo } from "./utils/data";
+import { getRandomEmployeesInfo } from "./utils/data";
+import { validateRequestBody, validateRequestId, departmentInfoInstance, employeeInfoInstance } from "./utils/validation";
 
 /**
  * The server is a mock representation through MirageJS of an actual backend
@@ -26,26 +28,37 @@ const models = {
  * Used for mirage to know how to create specific models
  * Note: these are 1-1 representations of their interfaces without the database-related fields
  * Have to be updated manually to match that constraint, tedious but error-prone in the long run
+ * We mutate blank employee instances to make validation of their fields easier
+ * Once the interfaces change, the instances will no longer be valid and will need to be adjusted
+ * Any necessary changes to tests/validation can happen then as well, without going unnoticed
  */
 const factories = {
   employee: Factory.extend({
     info(i: number) : EmployeeInfo {
-      return {
-        firstName: "Unassigned",
-        lastName: `Employee ${i.toString()}`,
-        pictureUrl: `https://randomuser.me/api/portraits/${(i % 2 == 0) ? "women" : "men"}/1.jpg`,
-        title: "Random Person",
-      };
+      return (
+        {...employeeInfoInstance, 
+          firstName: "Unassigned",
+          lastName: `Employee ${i.toString()}`,
+          pictureUrl: `https://randomuser.me/api/portraits/${(i % 2 == 0) ? "women" : "men"}/1.jpg`,
+          title: "Random Person",
+        } as EmployeeInfo
+      );
     },
   }),
   department: Factory.extend({
     info(i: number) : DepartmentInfo {
-      return {
-        name: `Example department ${i.toString()}`,
-      };
+      // For some reason, if the fields that use i are outside of the render method the order is "flipped"
+      // (i.e, the first call to create will have id N where N is the number of total calls)
+      return (
+        {...departmentInfoInstance, 
+          name: `Example department ${i.toString()}`
+        } as DepartmentInfo
+      );
     },
   }),
 };
+
+
 
 /**
  * Used to serialize specific models
@@ -67,6 +80,13 @@ const serializers = {
  */
 export type AppRegistry = Registry<typeof models, typeof factories>;
 let server: Server<AppRegistry>;
+
+/**
+ * These ones below are for validation
+ */
+export type AppSchema = Schema<AppRegistry>;
+export type DepartmentResult = Instantiate<AppRegistry, "department">;
+export type EmployeeResult = Instantiate<AppRegistry, "employee">;
 
 /**
  * Creates a MirageJS server
@@ -146,11 +166,13 @@ export default async (environment = "development") : Promise<Server> => {
          * Get all of a department's employees
          */
         this.get("/departments/:id/employees", (schema, request) => {
-          // TODO: validate
           const departmentId = request.params.id;
-          const department = schema.find("department", departmentId);
-          if(!department)
-            return [];
+          const validationResult = validateRequestId("department", schema, departmentId);
+          if(validationResult.errorResponse)
+            return validationResult.errorResponse;
+          
+          // Request was valid
+          const department = validationResult.data as DepartmentResult;
           return department.employees;
         });
 
@@ -166,18 +188,13 @@ export default async (environment = "development") : Promise<Server> => {
          * Note: only the info object's body should be in the request's body
          */
         this.post("/departments", (schema, request) => {
-          const requiredFields = ["name"];
-          const body = request.requestBody;
-          if(body === null)
-            return new Response(400, {ErrorType: "Exclusion"}, {errors: requiredFields});
-          
-          const payload = JSON.parse(body);
-          const response = getPayloadResponse(payload, requiredFields);
-          if(response !== null)
-            return response;
+          const body = (request.requestBody ? JSON.parse(request.requestBody) : null);
+          const validationError = validateRequestBody("department", body);
+          if(validationError.errorResponse)
+            return validationError.errorResponse;
 
-          // Payload is valid, so deliver it
-          return schema.create("department", {info: payload});
+          // Request was valid
+          return schema.create("department", {info: body});
         });
 
         /**
@@ -185,9 +202,12 @@ export default async (environment = "development") : Promise<Server> => {
          */
         this.delete("/departments/:id", (schema, request) => {
           const id = request.params.id;
-          const department = schema.find("department", id);
-          if(!department)
-            return new Response(400, {ErrorType: "Invalid"}, {errors: ["id"]});
+          const validationResult = validateRequestId("department", schema, id);
+          if(validationResult.errorResponse)
+            return validationResult.errorResponse;
+          
+          // Request was valid
+          const department = validationResult.data as DepartmentResult;
           department.destroy();
           return department;
         });
@@ -198,21 +218,17 @@ export default async (environment = "development") : Promise<Server> => {
          */
         this.put("/departments/:id", (schema, request) => {
           const id = request.params.id;
-          const requiredFields = ["name"];
-          const body = request.requestBody;
-          if(body === null)
-            return new Response(400, {ErrorType: "Exclusion"}, {errors: requiredFields});
+          const idValidationResult = validateRequestId("department", schema, id);
+          if(idValidationResult.errorResponse)
+            return idValidationResult.errorResponse;
           
-          const payload = JSON.parse(body);
-          const response = getPayloadResponse(payload, requiredFields);
-          if(response !== null)
-            return response;
+          const payload = (request.requestBody ? JSON.parse(request.requestBody) : null);
+          const bodyValidationResult = validateRequestBody("department", payload);
+          if(bodyValidationResult.errorResponse)
+            return bodyValidationResult.errorResponse;
           
-          const department = schema.find("department", id);
-          if(!department)
-            return new Response(400, {ErrorType: "Invalid"}, {errors: ["id"]});
-          
-          // Payload is valid, so update
+          // Request was valid
+          const department = idValidationResult.data as DepartmentResult;
           department.update("info", payload);
           return department;
         });

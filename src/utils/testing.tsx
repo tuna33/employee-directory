@@ -39,7 +39,7 @@ export function visit(url: string, toTestPage: boolean): RenderResult {
           // The reason we don't do that directly is because of the relationship
           // No point getting departments first to then get employees with their department again
           const employees = json.employees as Employee[];
-          let departments = json.departments as Department[];
+          let departments = (json.departments === undefined ? [] : json.departments) as Department[];
           if(employees.length === 0) {
             fetch("/api/departments")
               .then(res => res.json())
@@ -82,8 +82,9 @@ export function visit(url: string, toTestPage: boolean): RenderResult {
 
       return (
         <div key={id}>
-          <p>{lastName.toUpperCase()}, {firstName}</p>
-          <img src={pictureUrl} />
+          <p>{lastName}</p>
+          <p>{firstName}</p>
+          <img src={pictureUrl} alt={pictureUrl} />
           <p>{title}</p>
           <p>{departmentName}</p>
         </div>

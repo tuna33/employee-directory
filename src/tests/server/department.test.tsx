@@ -31,7 +31,7 @@ describe("Department", () => {
     for(let i = 0; i < departments.length; i++) {
       const department = departments[i] as Department;
       expect(department.id).toEqual((i+1).toString());
-      expect(department.info).toEqual({name: `Example department ${i}`});
+      expect(department.info).toEqual({name: `Example department ${i.toString()}`});
       expect(screen.queryByText(department.info.name)).toBeInTheDocument();
     }
     expect(screen.queryByText("There are no employees matching your selected filters.")).toBeInTheDocument();
@@ -66,7 +66,7 @@ describe("Department", () => {
     await fetch("/api/departments", {method: "POST", body: JSON.stringify({name: "Invalid Department", id: "3"})})
       .then(res => {
         expect(res.status).toEqual(400);
-        expect(res.headers.get("ErrorType")).toEqual("Inclusion");
+        expect(res.headers.get("ErrorType")).toEqual("Invalid");
         res.json()
           .then(json => expect(json.errors).toEqual(["id"]));
       });
