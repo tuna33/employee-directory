@@ -1,5 +1,5 @@
 import { belongsTo, createServer, Factory, hasMany, Model, Registry, RestSerializer, Server, Response } from "miragejs";
-import { EmployeeInfo } from "./types";
+import { DepartmentInfo, EmployeeInfo } from "./types";
 import { getPayloadResponse, getRandomEmployeesInfo } from "./utils/data";
 
 /**
@@ -29,16 +29,20 @@ const models = {
  */
 const factories = {
   employee: Factory.extend({
-    info: {
-      firstName: "Unassigned",
-      lastName: "Employee",
-      pictureUrl: "",
-      title: "",
-    } as EmployeeInfo,
+    info(i: number) : EmployeeInfo {
+      return {
+        firstName: "Unassigned",
+        lastName: `Employee ${i.toString()}`,
+        pictureUrl: `https://randomuser.me/api/portraits/${(i % 2 == 0) ? "women" : "men"}/1.jpg`,
+        title: "Random Person",
+      };
+    },
   }),
   department: Factory.extend({
-    info: {
-      name: "Unassigned department",
+    info(i: number) : DepartmentInfo {
+      return {
+        name: `Example department ${i.toString()}`,
+      };
     },
   }),
 };

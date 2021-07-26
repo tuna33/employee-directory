@@ -3,36 +3,17 @@
  */
 
 import { screen, waitForElementToBeRemoved } from "@testing-library/react";
-import makeServer, { AppRegistry } from "../server";
-import { visit } from "../utils/testing";
+import makeServer, { AppRegistry } from "../../server";
+import { visit } from "../../utils/testing";
 import "@testing-library/jest-dom";
 import { Server } from "miragejs";
+import { Department } from "../../types";
 
 // The exact registry has to be shared from server to allow for Intellisense here
 let server: Server<AppRegistry>;
 
-// Typescript will prevent compilation of any attributes to server.create()/etc as long as the correct AppRegistry is applied
-// Those calls are performed only on the (mock) server itself and (potentially) on this test suite
-// They are type checked with the exception of an empty object ({}) which would create the respective object through its factory default values
-// For that reason, it only really makes sense to check the HTTP requests themselves (either through the testbench or `fetch` directly)
-// The mock (and real) server should validate the input they receive first before calling server.create()/etc
-
-// For every invalid (fetch) test possibility, there are two reasons why that operation can fail
-// 1. It missed one or more required fields
-// 2. It included one or more invalid fields
-// 3. It included one or more unnecessary fields
-
 beforeEach(async () => server = await makeServer("test"));
 afterEach(async () => server.shutdown());
-
-describe("Misc", () => {
-  it("should display nothing with empty data", async () => {
-    visit("/", true);
-    await waitForElementToBeRemoved(screen.queryByText("Loading..."), {timeout: 1500});
-    expect(screen.queryByText("There are no employees matching your selected filters.")).toBeInTheDocument();
-    expect(screen.queryByText("There are no departments matching your selected filters.")).toBeInTheDocument();
-  });
-});
 
 describe("Department", () => {
   
@@ -40,16 +21,17 @@ describe("Department", () => {
 
   it("should display existing departments", async () => {
     const departments = [
-      server.create("department", {info: {name: "Example Department 1"}}),
-      server.create("department", {info: {name: "Example Department 2"}}),
-      server.create("department", {info: {name: "Example Department 3"}}),
+      // We can take advantage of Mirage's factories here
+      server.create("department"),
+      server.create("department"),
+      server.create("department"),
     ];
     visit("/", true);
     await waitForElementToBeRemoved(screen.queryByText("Loading..."), {timeout: 1500});
     for(let i = 0; i < departments.length; i++) {
-      const department = departments[i];
+      const department = departments[i] as Department;
       expect(department.id).toEqual((i+1).toString());
-      expect(department.info).toEqual(departments[i].info);
+      expect(department.info).toEqual({name: `Example department ${i}`});
       expect(screen.queryByText(department.info.name)).toBeInTheDocument();
     }
     expect(screen.queryByText("There are no employees matching your selected filters.")).toBeInTheDocument();
