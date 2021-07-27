@@ -1,4 +1,4 @@
-import { belongsTo, createServer, Factory, hasMany, Model, Registry, RestSerializer, Server, Instantiate } from "miragejs";
+import { belongsTo, createServer, Factory, hasMany, Model, Registry, Response, RestSerializer, Server, Instantiate } from "miragejs";
 import Schema from "miragejs/orm/schema";
 import { DepartmentInfo, EmployeeInfo } from "./types";
 import { getRandomEmployeesInfo } from "./utils/data";
@@ -142,23 +142,72 @@ export default async (environment = "development") : Promise<Server> => {
 
         /**
          * Create an employee
+         * Note: only the info object's body should be in the request's body (and an optional departmentId)
          */
         this.post("/employees", (schema, request) => {
-          const attrs = JSON.parse(request.requestBody);
-          // TODO: validate
-          return schema.create("employee", attrs);
+          const payload = request.requestBody ? JSON.parse(request.requestBody) : null;
+          const validationError = validateRequestBody("employee", payload, ["departmentId"]);
+          if(validationError.errorResponse)
+            return validationError.errorResponse;
+          
+
+          // If the employee was created with a department id, make sure it's valid
+          if(payload.departmentId) {
+            const department = schema.find("department", payload.departmentId);
+            if(!department)
+              return new Response(400, {ErrorType: "Invalid"}, {errors: ["departmentId"]});
+            
+            const employee = schema.create("employee", {info: {...payload, departmentId: undefined}, department: department});
+            return employee;
+          }
+          // Request was valid
+          return schema.create("employee", {info: payload});
         });
 
         /**
          * Delete an employee by id
          */
         this.delete("/employees/:id", (schema, request) => {
-          // TODO: validate
           const id = request.params.id;
-          const employee = schema.find("employee", id);
-          if(!employee)
-            return {};
+          const validationResult = validateRequestId("employee", schema, id);
+          if(validationResult.errorResponse)
+            return validationResult.errorResponse;
+          
+          // Request was valid
+          // No need to delete an assigned employee in its department - Mirage takes care of that
+          const employee = validationResult.data as EmployeeResult;
           employee.destroy();
+          return {};
+        });
+
+        /**
+         * Update an employee
+         * Note: only the info object's body should be in the request's body (and an optional departmentId)
+         */
+         this.put("/employees/:id", (schema, request) => {
+          const id = request.params.id;
+          const idValidationResult = validateRequestId("employee", schema, id);
+          if(idValidationResult.errorResponse)
+            return idValidationResult.errorResponse;
+          
+          const payload = (request.requestBody ? JSON.parse(request.requestBody) : null);
+          const bodyValidationResult = validateRequestBody("employee", payload, ["departmentId"]);
+          if(bodyValidationResult.errorResponse)
+            return bodyValidationResult.errorResponse;
+          
+          // Request was valid
+          const employee = idValidationResult.data as EmployeeResult;
+
+          // If the update is changing to a new department id, make sure it's valid
+          if(payload.departmentId) {
+            const department = schema.find("department", payload.departmentId);
+            if(!department)
+              return new Response(400, {ErrorType: "Invalid"}, {errors: ["departmentId"]});
+            
+            employee.update("department", department);
+          }
+          
+          employee.update("info", {...payload, departmentId: undefined});
           return employee;
         });
 
@@ -188,13 +237,13 @@ export default async (environment = "development") : Promise<Server> => {
          * Note: only the info object's body should be in the request's body
          */
         this.post("/departments", (schema, request) => {
-          const body = (request.requestBody ? JSON.parse(request.requestBody) : null);
-          const validationError = validateRequestBody("department", body);
+          const payload = request.requestBody ? JSON.parse(request.requestBody) : null;
+          const validationError = validateRequestBody("department", payload);
           if(validationError.errorResponse)
             return validationError.errorResponse;
 
           // Request was valid
-          return schema.create("department", {info: body});
+          return schema.create("department", {info: payload});
         });
 
         /**

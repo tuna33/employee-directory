@@ -4,7 +4,7 @@
 export interface Employee {
   id: string,
   info: EmployeeInfo,
-  departmentId: string,
+  departmentId?: string,
 }
 
 /**
