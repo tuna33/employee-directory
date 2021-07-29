@@ -141,6 +141,20 @@ export default async (environment = "development") : Promise<Server> => {
         });
 
         /**
+         * Get a specific employee
+         */
+         this.get("/employees/:id", (schema, request) => {
+          const id = request.params.id;
+          const validationResult = validateRequestId("employee", schema, id);
+          if(validationResult.errorResponse)
+            return validationResult.errorResponse;
+          
+          // Request was valid
+          const employee = validationResult.data as EmployeeResult;
+          return employee;
+        });
+
+        /**
          * Create an employee
          * Note: only the info object's body should be in the request's body (and an optional departmentId)
          */
@@ -230,6 +244,20 @@ export default async (environment = "development") : Promise<Server> => {
          */
         this.get("/departments", (schema) => {
           return schema.all("department");
+        });
+
+        /**
+         * Get a specific department
+         */
+         this.get("/departments/:id", (schema, request) => {
+          const id = request.params.id;
+          const validationResult = validateRequestId("department", schema, id);
+          if(validationResult.errorResponse)
+            return validationResult.errorResponse;
+          
+          // Request was valid
+          const department = validationResult.data as DepartmentResult;
+          return department;
         });
 
         /**

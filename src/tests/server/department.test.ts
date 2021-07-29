@@ -41,6 +41,9 @@ describe("Department", () => {
       });
   });
 
+  it.todo("should get a valid department");
+  it.todo("should not get an invalid department");
+
   /// POST => creating data
   
   it("should create a valid department", async () => {
