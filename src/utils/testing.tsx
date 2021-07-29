@@ -6,7 +6,7 @@ import App from "../components/App";
 
 // Thanks to https://github.com/miragejs/tutorial/blob/master/src/lib/test-helpers.js
 export function visit(url: string): RenderResult {
-  return render(  
+  return render(
     <MemoryRouter initialEntries={[url]}>
       <QueryParamProvider ReactRouterRoute={Route}>
         <App />

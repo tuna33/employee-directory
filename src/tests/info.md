@@ -15,6 +15,7 @@ For that reason, it only really makes sense to check the HTTP requests themselve
 The mock (and real) server should validate the input they receive first before calling server.create()/etc
 
 For every invalid (fetch) test possibility, there are two reasons why that operation can fail
+
 1. It missed one or more required fields
 2. It included one or more invalid fields
 3. It included one or more unnecessary fields

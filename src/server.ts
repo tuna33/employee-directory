@@ -1,8 +1,24 @@
-import { belongsTo, createServer, Factory, hasMany, Model, Registry, Response, RestSerializer, Server, Instantiate } from "miragejs";
+import {
+  belongsTo,
+  createServer,
+  Factory,
+  hasMany,
+  Model,
+  Registry,
+  Response,
+  RestSerializer,
+  Server,
+  Instantiate,
+} from "miragejs";
 import Schema from "miragejs/orm/schema";
 import { DepartmentInfo, EmployeeInfo } from "./types";
 import { getRandomEmployeesInfo } from "./utils/data";
-import { validateRequestBody, validateRequestId, departmentInfoInstance, employeeInfoInstance } from "./utils/validation";
+import {
+  validateRequestBody,
+  validateRequestId,
+  departmentInfoInstance,
+  employeeInfoInstance,
+} from "./utils/validation";
 
 /**
  * The server is a mock representation through MirageJS of an actual backend
@@ -34,31 +50,29 @@ const models = {
  */
 const factories = {
   employee: Factory.extend({
-    info(i: number) : EmployeeInfo {
-      return (
-        {...employeeInfoInstance, 
-          firstName: "Unassigned",
-          lastName: `Employee ${i.toString()}`,
-          pictureUrl: `https://randomuser.me/api/portraits/${(i % 2 == 0) ? "women" : "men"}/1.jpg`,
-          title: "Random Person",
-        } as EmployeeInfo
-      );
+    info(i: number): EmployeeInfo {
+      return {
+        ...employeeInfoInstance,
+        firstName: "Unassigned",
+        lastName: `Employee ${i.toString()}`,
+        pictureUrl: `https://randomuser.me/api/portraits/${
+          i % 2 == 0 ? "women" : "men"
+        }/1.jpg`,
+        title: "Random Person",
+      } as EmployeeInfo;
     },
   }),
   department: Factory.extend({
-    info(i: number) : DepartmentInfo {
+    info(i: number): DepartmentInfo {
       // For some reason, if the fields that use i are outside of the render method the order is "flipped"
       // (i.e, the first call to create will have id N where N is the number of total calls)
-      return (
-        {...departmentInfoInstance, 
-          name: `Example department ${i.toString()}`
-        } as DepartmentInfo
-      );
+      return {
+        ...departmentInfoInstance,
+        name: `Example department ${i.toString()}`,
+      } as DepartmentInfo;
     },
   }),
 };
-
-
 
 /**
  * Used to serialize specific models
@@ -70,7 +84,7 @@ const serializers = {
     embed: false,
     keyForForeignKey(relationshipName) {
       return relationshipName + "Id";
-    }
+    },
   }),
 };
 
@@ -95,222 +109,279 @@ export type EmployeeResult = Instantiate<AppRegistry, "employee">;
  * @params environment environment to run the server in
  * @returns A Promise to the server
  */
-export default async (environment = "development") : Promise<Server> => {
+export default async (environment = "development"): Promise<Server> => {
   const randomEmployeeCount = Math.floor(Math.random() * 100) + 1;
-  await getRandomEmployeesInfo(randomEmployeeCount).then(employeesInfo => {
-    server = createServer({
-      environment,
-      serializers,
-      models,
-      factories,
-
-      /**
-       * Populate a server with initial data
-       * @param server the server to apply the seeds on
-       */
-      seeds(server) {
-        const departments = [
-          server.create("department", {info: {name: "Engineering"}}),
-          server.create("department", {info: {name: "Management"}}),
-          server.create("department", {info: {name: "Human Resources"}}),
-        ];
-        employeesInfo.forEach(info => {
-          const randomDepartmentIdx = Math.floor(Math.random() * departments.length);
-          const newEmployee = {
-            info: info,
-            department: departments[randomDepartmentIdx],
-          };
-          server.create("employee", newEmployee);
-        });
-      },
-
-      /**
-       * Process requests according to their route (url)
-       */
-      routes() {
-        /**
-         * Process all the requests from the api namespace
-         */
-        this.namespace = "api";
+  await getRandomEmployeesInfo(randomEmployeeCount)
+    .then((employeesInfo) => {
+      server = createServer({
+        environment,
+        serializers,
+        models,
+        factories,
 
         /**
-         * Get all employees
+         * Populate a server with initial data
+         * @param server the server to apply the seeds on
          */
-        this.get("/employees", (schema) => {
-          return schema.all("employee");
-        });
+        seeds(server) {
+          const departments = [
+            server.create("department", { info: { name: "Engineering" } }),
+            server.create("department", { info: { name: "Management" } }),
+            server.create("department", { info: { name: "Human Resources" } }),
+          ];
+          employeesInfo.forEach((info) => {
+            const randomDepartmentIdx = Math.floor(
+              Math.random() * departments.length
+            );
+            const newEmployee = {
+              info: info,
+              department: departments[randomDepartmentIdx],
+            };
+            server.create("employee", newEmployee);
+          });
+        },
 
         /**
-         * Get a specific employee
+         * Process requests according to their route (url)
          */
-         this.get("/employees/:id", (schema, request) => {
-          const id = request.params.id;
-          const validationResult = validateRequestId("employee", schema, id);
-          if(validationResult.errorResponse)
-            return validationResult.errorResponse;
-          
-          // Request was valid
-          const employee = validationResult.data as EmployeeResult;
-          return employee;
-        });
+        routes() {
+          /**
+           * Process all the requests from the api namespace
+           */
+          this.namespace = "api";
 
-        /**
-         * Create an employee
-         * Note: only the info object's body should be in the request's body (and an optional departmentId)
-         */
-        this.post("/employees", (schema, request) => {
-          const payload = request.requestBody ? JSON.parse(request.requestBody) : null;
-          const validationError = validateRequestBody("employee", payload, ["departmentId"]);
-          if(validationError.errorResponse)
-            return validationError.errorResponse;
-          
+          /**
+           * Get all employees
+           */
+          this.get("/employees", (schema) => {
+            return schema.all("employee");
+          });
 
-          // If the employee was created with a department id, make sure it's valid
-          if(payload.departmentId) {
-            const department = schema.find("department", payload.departmentId);
-            if(!department)
-              return new Response(400, {ErrorType: "Invalid"}, {errors: ["departmentId"]});
-            
-            const employee = schema.create("employee", {info: {...payload, departmentId: undefined}, department: department});
+          /**
+           * Get a specific employee
+           */
+          this.get("/employees/:id", (schema, request) => {
+            const id = request.params.id;
+            const validationResult = validateRequestId("employee", schema, id);
+            if (validationResult.errorResponse)
+              return validationResult.errorResponse;
+
+            // Request was valid
+            const employee = validationResult.data as EmployeeResult;
             return employee;
-          }
-          // Request was valid
-          return schema.create("employee", {info: payload});
-        });
+          });
 
-        /**
-         * Delete an employee by id
-         */
-        this.delete("/employees/:id", (schema, request) => {
-          const id = request.params.id;
-          const validationResult = validateRequestId("employee", schema, id);
-          if(validationResult.errorResponse)
-            return validationResult.errorResponse;
-          
-          // Request was valid
-          // No need to delete an assigned employee in its department - Mirage takes care of that
-          const employee = validationResult.data as EmployeeResult;
-          employee.destroy();
-          return {};
-        });
+          /**
+           * Create an employee
+           * Note: only the info object's body should be in the request's body (and an optional departmentId)
+           */
+          this.post("/employees", (schema, request) => {
+            const payload = request.requestBody
+              ? JSON.parse(request.requestBody)
+              : null;
+            const validationError = validateRequestBody("employee", payload, [
+              "departmentId",
+            ]);
+            if (validationError.errorResponse)
+              return validationError.errorResponse;
 
-        /**
-         * Update an employee
-         * Note: only the info object's body should be in the request's body (and an optional departmentId)
-         */
-         this.put("/employees/:id", (schema, request) => {
-          const id = request.params.id;
-          const idValidationResult = validateRequestId("employee", schema, id);
-          if(idValidationResult.errorResponse)
-            return idValidationResult.errorResponse;
-          
-          const payload = (request.requestBody ? JSON.parse(request.requestBody) : null);
-          const bodyValidationResult = validateRequestBody("employee", payload, ["departmentId"]);
-          if(bodyValidationResult.errorResponse)
-            return bodyValidationResult.errorResponse;
-          
-          // Request was valid
-          const employee = idValidationResult.data as EmployeeResult;
+            // If the employee was created with a department id, make sure it's valid
+            if (payload.departmentId) {
+              const department = schema.find(
+                "department",
+                payload.departmentId
+              );
+              if (!department)
+                return new Response(
+                  400,
+                  { ErrorType: "Invalid" },
+                  { errors: ["departmentId"] }
+                );
 
-          // If the update is changing to a new department id, make sure it's valid
-          if(payload.departmentId) {
-            const department = schema.find("department", payload.departmentId);
-            if(!department)
-              return new Response(400, {ErrorType: "Invalid"}, {errors: ["departmentId"]});
-            
-            employee.update("department", department);
-          }
-          
-          employee.update("info", {...payload, departmentId: undefined});
-          return employee;
-        });
+              const employee = schema.create("employee", {
+                info: { ...payload, departmentId: undefined },
+                department: department,
+              });
+              return employee;
+            }
+            // Request was valid
+            return schema.create("employee", { info: payload });
+          });
 
-        /**
-         * Get all of a department's employees
-         */
-        this.get("/departments/:id/employees", (schema, request) => {
-          const departmentId = request.params.id;
-          const validationResult = validateRequestId("department", schema, departmentId);
-          if(validationResult.errorResponse)
-            return validationResult.errorResponse;
-          
-          // Request was valid
-          const department = validationResult.data as DepartmentResult;
-          return department.employees;
-        });
+          /**
+           * Delete an employee by id
+           */
+          this.delete("/employees/:id", (schema, request) => {
+            const id = request.params.id;
+            const validationResult = validateRequestId("employee", schema, id);
+            if (validationResult.errorResponse)
+              return validationResult.errorResponse;
 
-        /**
-         * Get all departments
-         */
-        this.get("/departments", (schema) => {
-          return schema.all("department");
-        });
+            // Request was valid
+            // No need to delete an assigned employee in its department - Mirage takes care of that
+            const employee = validationResult.data as EmployeeResult;
+            employee.destroy();
+            return {};
+          });
 
-        /**
-         * Get a specific department
-         */
-         this.get("/departments/:id", (schema, request) => {
-          const id = request.params.id;
-          const validationResult = validateRequestId("department", schema, id);
-          if(validationResult.errorResponse)
-            return validationResult.errorResponse;
-          
-          // Request was valid
-          const department = validationResult.data as DepartmentResult;
-          return department;
-        });
+          /**
+           * Update an employee
+           * Note: only the info object's body should be in the request's body (and an optional departmentId)
+           */
+          this.put("/employees/:id", (schema, request) => {
+            const id = request.params.id;
+            const idValidationResult = validateRequestId(
+              "employee",
+              schema,
+              id
+            );
+            if (idValidationResult.errorResponse)
+              return idValidationResult.errorResponse;
 
-        /**
-         * Create a department
-         * Note: only the info object's body should be in the request's body
-         */
-        this.post("/departments", (schema, request) => {
-          const payload = request.requestBody ? JSON.parse(request.requestBody) : null;
-          const validationError = validateRequestBody("department", payload);
-          if(validationError.errorResponse)
-            return validationError.errorResponse;
+            const payload = request.requestBody
+              ? JSON.parse(request.requestBody)
+              : null;
+            const bodyValidationResult = validateRequestBody(
+              "employee",
+              payload,
+              ["departmentId"]
+            );
+            if (bodyValidationResult.errorResponse)
+              return bodyValidationResult.errorResponse;
 
-          // Request was valid
-          return schema.create("department", {info: payload});
-        });
+            // Request was valid
+            const employee = idValidationResult.data as EmployeeResult;
 
-        /**
-         * Delete a department
-         */
-        this.delete("/departments/:id", (schema, request) => {
-          const id = request.params.id;
-          const validationResult = validateRequestId("department", schema, id);
-          if(validationResult.errorResponse)
-            return validationResult.errorResponse;
-          
-          // Request was valid
-          const department = validationResult.data as DepartmentResult;
-          department.destroy();
-          return department;
-        });
+            // If the update is changing to a new department id, make sure it's valid
+            if (payload.departmentId) {
+              const department = schema.find(
+                "department",
+                payload.departmentId
+              );
+              if (!department)
+                return new Response(
+                  400,
+                  { ErrorType: "Invalid" },
+                  { errors: ["departmentId"] }
+                );
 
-        /**
-         * Update a department
-         * Note: only the info object's body should be in the request's body
-         */
-        this.put("/departments/:id", (schema, request) => {
-          const id = request.params.id;
-          const idValidationResult = validateRequestId("department", schema, id);
-          if(idValidationResult.errorResponse)
-            return idValidationResult.errorResponse;
-          
-          const payload = (request.requestBody ? JSON.parse(request.requestBody) : null);
-          const bodyValidationResult = validateRequestBody("department", payload);
-          if(bodyValidationResult.errorResponse)
-            return bodyValidationResult.errorResponse;
-          
-          // Request was valid
-          const department = idValidationResult.data as DepartmentResult;
-          department.update("info", payload);
-          return department;
-        });
-      },
-    });
-  }).catch(e => console.error("Error when starting mock server:", e));
+              employee.update("department", department);
+            }
+
+            employee.update("info", { ...payload, departmentId: undefined });
+            return employee;
+          });
+
+          /**
+           * Get all of a department's employees
+           */
+          this.get("/departments/:id/employees", (schema, request) => {
+            const departmentId = request.params.id;
+            const validationResult = validateRequestId(
+              "department",
+              schema,
+              departmentId
+            );
+            if (validationResult.errorResponse)
+              return validationResult.errorResponse;
+
+            // Request was valid
+            const department = validationResult.data as DepartmentResult;
+            return department.employees;
+          });
+
+          /**
+           * Get all departments
+           */
+          this.get("/departments", (schema) => {
+            return schema.all("department");
+          });
+
+          /**
+           * Get a specific department
+           */
+          this.get("/departments/:id", (schema, request) => {
+            const id = request.params.id;
+            const validationResult = validateRequestId(
+              "department",
+              schema,
+              id
+            );
+            if (validationResult.errorResponse)
+              return validationResult.errorResponse;
+
+            // Request was valid
+            const department = validationResult.data as DepartmentResult;
+            return department;
+          });
+
+          /**
+           * Create a department
+           * Note: only the info object's body should be in the request's body
+           */
+          this.post("/departments", (schema, request) => {
+            const payload = request.requestBody
+              ? JSON.parse(request.requestBody)
+              : null;
+            const validationError = validateRequestBody("department", payload);
+            if (validationError.errorResponse)
+              return validationError.errorResponse;
+
+            // Request was valid
+            return schema.create("department", { info: payload });
+          });
+
+          /**
+           * Delete a department
+           */
+          this.delete("/departments/:id", (schema, request) => {
+            const id = request.params.id;
+            const validationResult = validateRequestId(
+              "department",
+              schema,
+              id
+            );
+            if (validationResult.errorResponse)
+              return validationResult.errorResponse;
+
+            // Request was valid
+            const department = validationResult.data as DepartmentResult;
+            department.destroy();
+            return department;
+          });
+
+          /**
+           * Update a department
+           * Note: only the info object's body should be in the request's body
+           */
+          this.put("/departments/:id", (schema, request) => {
+            const id = request.params.id;
+            const idValidationResult = validateRequestId(
+              "department",
+              schema,
+              id
+            );
+            if (idValidationResult.errorResponse)
+              return idValidationResult.errorResponse;
+
+            const payload = request.requestBody
+              ? JSON.parse(request.requestBody)
+              : null;
+            const bodyValidationResult = validateRequestBody(
+              "department",
+              payload
+            );
+            if (bodyValidationResult.errorResponse)
+              return bodyValidationResult.errorResponse;
+
+            // Request was valid
+            const department = idValidationResult.data as DepartmentResult;
+            department.update("info", payload);
+            return department;
+          });
+        },
+      });
+    })
+    .catch((e) => console.error("Error when starting mock server:", e));
   return server;
-}
+};
