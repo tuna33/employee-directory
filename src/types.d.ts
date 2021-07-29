@@ -31,3 +31,22 @@ export interface Department {
 export interface DepartmentInfo {
   name: string;
 }
+
+/**
+ * Global state for employee data
+ */
+interface EmployeeState {
+  data: Employee[];
+  isLoading: boolean; // Loading data after a fetch
+  isUpdating: boolean; // Sending data for an update
+}
+
+/**
+ * Global state for department data
+ */
+interface DepartmentState {
+  data: Department[];
+  names: Record<string, string>; // To get the name of a department from its id
+  isLoading: boolean; // Loading data after a fetch
+  isUpdating: boolean; // Sending data for an update
+}
