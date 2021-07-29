@@ -10,7 +10,6 @@ export const Gallery: React.FC = () => {
     departments: DepartmentState
   ) => {
     const cards = [];
-    console.log(employees.indices);
     for (const employeeIndex of Object.values(employees.indices)) {
       const employee = employees.data[employeeIndex];
       const departmentId = employee.departmentId;

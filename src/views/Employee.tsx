@@ -1,4 +1,7 @@
 import {
+  Alert,
+  AlertIcon,
+  Box,
   Button,
   Grid,
   Heading,
@@ -7,15 +10,22 @@ import {
   VStack,
   Wrap,
 } from "@chakra-ui/react";
-import React from "react";
-import { useParams } from "react-router-dom";
+import React, { useState } from "react";
+import { useHistory, useParams } from "react-router-dom";
 import { DepartmentContext, EmployeeContext } from "../components/App";
 import { EmployeeCard } from "../components/Card";
+import { DeleteButtonDialog } from "../components/Dialog";
 import { DepartmentState, EmployeeState } from "../types";
 import { employeeBioPlaceholder } from "../utils/text";
 
+type OperationStatus = "none" | "success" | "failure" | "in progress";
+
 export const EmployeeView: React.FC = () => {
   const { id } = useParams<{ id: string }>();
+  const history = useHistory();
+  const [deletionStatus, setDeletionStatus] = useState(
+    "none" as OperationStatus
+  );
 
   const getEmployeeCard = (
     employees: EmployeeState,
@@ -43,6 +53,66 @@ export const EmployeeView: React.FC = () => {
     return card;
   };
 
+  const deleteEmployee = (employees: EmployeeState) => {
+    setDeletionStatus("in progress");
+    fetch(`/api/employees/${id}`, { method: "DELETE" }).then((res) => {
+      if (res.status !== 200) {
+        setDeletionStatus("failure");
+        setTimeout(() => setDeletionStatus("none"), 1000);
+        return;
+      }
+      setDeletionStatus("success");
+      // Delete the employee from the cache, and redirect to employees page
+      employees.data = employees.data.filter((e) => e.id !== id);
+      // The new data array needs all indices to be adjusted
+      const indices: Record<string, number> = {};
+      let beforeId = true;
+      for (const [entry, index] of Object.entries(employees.indices)) {
+        if (entry === id) {
+          beforeId = false;
+        } else {
+          indices[entry] = beforeId ? index : index - 1;
+        }
+      }
+      employees.indices = indices;
+      setTimeout(() => {
+        history.push("/employees");
+      }, 1000);
+    });
+  };
+
+  const getStatusMessage = () => {
+    if (deletionStatus === "none") return null;
+    let alert = {} as JSX.Element;
+    if (deletionStatus === "in progress") {
+      alert = (
+        <Alert status="info">
+          <AlertIcon />
+          Attempting to delete employee
+        </Alert>
+      );
+    } else if (deletionStatus === "failure") {
+      alert = (
+        <Alert status="error">
+          <AlertIcon />
+          Could not delete employee
+        </Alert>
+      );
+    } else if (deletionStatus === "success") {
+      alert = (
+        <Alert status="success">
+          <AlertIcon />
+          Successfully deleted employee
+        </Alert>
+      );
+    }
+    return (
+      <Box textAlign="center" paddingTop="20px" borderRadius="15px">
+        {alert}
+      </Box>
+    );
+  };
+
   return (
     <Grid marginTop="50px">
       <EmployeeContext.Consumer>
@@ -55,7 +125,10 @@ export const EmployeeView: React.FC = () => {
                     {getEmployeeCard(employeeData, departmentData)}
                     <HStack paddingTop="20px" spacing="5">
                       <Button>Edit</Button>
-                      <Button>Delete</Button>
+                      <DeleteButtonDialog
+                        onDelete={() => deleteEmployee(employeeData)}
+                        disabled={deletionStatus !== "none"}
+                      />
                     </HStack>
                   </VStack>
                   <Wrap
@@ -75,6 +148,7 @@ export const EmployeeView: React.FC = () => {
                     ))}
                   </Wrap>
                 </HStack>
+                {getStatusMessage()}
               </VStack>
             )}
           </DepartmentContext.Consumer>
