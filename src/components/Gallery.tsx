@@ -1,22 +1,42 @@
 import { Wrap, WrapItem } from "@chakra-ui/react";
 import React from "react";
-import { EmployeeState } from "../types";
+import { DepartmentState, EmployeeState } from "../types";
+import { DepartmentContext, EmployeeContext } from "./App";
 import { EmployeeCard } from "./Card";
 
-export const Gallery: React.FC<{
-  employeeData: EmployeeState;
-  departmentNames: Record<string, string>;
-}> = ({ employeeData, departmentNames }) => {
-  const employeeCards = employeeData.data.map((e) => (
-    <WrapItem key={e.id}>
-      <EmployeeCard
-        employee={e}
-        departmentName={
-          e.departmentId ? departmentNames[e.departmentId] : "No Department"
-        }
-      />
-    </WrapItem>
-  ));
+export const Gallery: React.FC = () => {
+  const getEmployeeCards = (
+    employees: EmployeeState,
+    departments: DepartmentState
+  ) => {
+    const cards = [];
+    console.log(employees.indices);
+    for (const employeeIndex of Object.values(employees.indices)) {
+      const employee = employees.data[employeeIndex];
+      const departmentId = employee.departmentId;
+      let departmentName: string;
+      if (!departmentId) {
+        departmentName = "No Department";
+      } else {
+        const departmentIndex = departments.indices[departmentId];
+        departmentName = departments.data[departmentIndex].info.name;
+      }
+      const card = (
+        <WrapItem key={employee.id}>
+          <EmployeeCard
+            key={employee.id}
+            employee={employee}
+            departmentName={departmentName}
+            url={`/employees/${employee.id}`}
+            learnMore={true}
+          />
+        </WrapItem>
+      );
+      cards.push(card);
+    }
+    return cards;
+  };
+
   return (
     <Wrap
       h="60vh"
@@ -29,7 +49,13 @@ export const Gallery: React.FC<{
       overflowX="clip"
       padding="10px"
     >
-      {employeeCards}
+      <EmployeeContext.Consumer>
+        {(employeeData) => (
+          <DepartmentContext.Consumer>
+            {(departmentData) => getEmployeeCards(employeeData, departmentData)}
+          </DepartmentContext.Consumer>
+        )}
+      </EmployeeContext.Consumer>
     </Wrap>
   );
 };

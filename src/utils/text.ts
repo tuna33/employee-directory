@@ -1,0 +1,18 @@
+export const employeeBioPlaceholder = [
+  {
+    section: "intro",
+    text: "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. In vitae turpis massa sed elementum tempus egestas. Arcu vitae elementum curabitur vitae. Ac tortor vitae purus faucibus ornare suspendisse sed. Amet nisl purus in mollis nunc. Sed libero enim sed faucibus turpis in eu mi. Nec feugiat nisl pretium fusce. Est lorem ipsum dolor sit amet consectetur. Amet volutpat consequat mauris nunc congue nisi. Turpis nunc eget lorem dolor sed viverra ipsum. Dictum varius duis at consectetur lorem. Quis risus sed vulputate odio ut enim. Malesuada fames ac turpis egestas maecenas pharetra convallis posuere morbi. Bibendum ut tristique et egestas quis ipsum suspendisse ultrices.",
+  },
+  {
+    section: "role",
+    text: "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Cursus risus at ultrices mi tempus. Risus feugiat in ante metus. Eget arcu dictum varius duis at. Nisl rhoncus mattis rhoncus urna neque. Mattis ullamcorper velit sed ullamcorper morbi. In iaculis nunc sed augue lacus viverra. Ultrices dui sapien eget mi proin sed libero. Sit amet nisl purus in mollis nunc sed. Blandit aliquam etiam erat velit scelerisque in. Venenatis a condimentum vitae sapien pellentesque habitant. Ultrices in iaculis nunc sed augue lacus viverra vitae congue. Viverra vitae congue eu consequat ac felis donec. Ultrices in iaculis nunc sed. Lectus proin nibh nisl condimentum id venenatis a condimentum. Ultricies leo integer malesuada nunc vel risus commodo viverra. Nulla posuere sollicitudin aliquam ultrices sagittis orci a scelerisque purus.",
+  },
+  {
+    section: "future",
+    text: "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ipsum consequat nisl vel pretium lectus. Arcu cursus vitae congue mauris rhoncus aenean. Lectus urna duis convallis convallis tellus id interdum velit. Mattis vulputate enim nulla aliquet. Orci a scelerisque purus semper eget duis. Nulla malesuada pellentesque elit eget gravida. Interdum varius sit amet mattis vulputate enim nulla. A scelerisque purus semper eget duis at tellus at. Eget duis at tellus at urna. Scelerisque eu ultrices vitae auctor eu augue ut lectus. Vitae sapien pellentesque habitant morbi tristique senectus et. Sed felis eget velit aliquet sagittis id. Nunc scelerisque viverra mauris in aliquam sem. Cursus risus at ultrices mi. Urna cursus eget nunc scelerisque viverra mauris in. Parturient montes nascetur ridiculus mus mauris. Libero nunc consequat interdum varius. In vitae turpis massa sed elementum.",
+  },
+  {
+    section: "closing",
+    text: "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Tellus mauris a diam maecenas. Morbi blandit cursus risus at ultrices mi. Magna fringilla urna porttitor rhoncus dolor. Diam quam nulla porttitor massa id neque aliquam vestibulum. Sit amet cursus sit amet dictum sit. Rhoncus aenean vel elit scelerisque mauris pellentesque pulvinar pellentesque. Elit at imperdiet dui accumsan sit amet nulla facilisi morbi. Ac auctor augue mauris augue. Vitae justo eget magna fermentum. Eget aliquet nibh praesent tristique. Arcu vitae elementum curabitur vitae nunc. Et odio pellentesque diam volutpat commodo sed egestas egestas fringilla. Nulla facilisi etiam dignissim diam quis enim lobortis scelerisque. Vitae turpis massa sed elementum tempus egestas sed. Id aliquet risus feugiat in ante metus.",
+  },
+];

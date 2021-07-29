@@ -1,7 +1,7 @@
 import { ChakraProvider, Grid } from "@chakra-ui/react";
 import React, { useEffect, useState } from "react";
 import { BrowserRouter, Route, Switch } from "react-router-dom";
-import { Department, DepartmentState, EmployeeState } from "../types";
+import { Department, DepartmentState, Employee, EmployeeState } from "../types";
 import { DepartmentsView } from "../views/Departments";
 import { DirectoryView } from "../views/Directory";
 import { EmployeesView } from "../views/Employees";
@@ -16,12 +16,13 @@ DepartmentContext.displayName = "Department Data";
 const App: React.FC = () => {
   const [employees, setEmployees] = useState({
     data: [],
+    indices: {},
     isLoading: true,
     isUpdating: false,
   } as EmployeeState);
   const [departments, setDepartments] = useState({
     data: [],
-    names: {},
+    indices: {},
     isLoading: true,
     isUpdating: false,
   } as DepartmentState);
@@ -37,12 +38,12 @@ const App: React.FC = () => {
           const departments: Department[] = json.departments
             ? json.departments
             : [];
-          const names: Record<string, string> = {};
-          for (const department of departments)
-            names[department.id] = department.info.name;
+          const indices: Record<string, number> = {};
+          for (let i = 0; i < departments.length; i++)
+            indices[departments[i].id] = i;
           setDepartments({
             data: departments,
-            names,
+            indices,
             isLoading: false,
             isUpdating: false,
           });
@@ -57,9 +58,13 @@ const App: React.FC = () => {
         .then((json) => {
           // TODO: currently, departments are sent here as well by the server serializer
           // It may be smarter to just send both separately now, since there can be unassigned employees
-          const employees = json.employees ? json.employees : [];
+          const employees: Employee[] = json.employees ? json.employees : [];
+          const indices: Record<string, number> = {};
+          for (let i = 0; i < employees.length; i++)
+            indices[employees[i].id] = i;
           setEmployees({
             data: employees,
+            indices,
             isLoading: false,
             isUpdating: false,
           });
@@ -86,9 +91,10 @@ const App: React.FC = () => {
   if (employees.isLoading || departments.isLoading)
     switchContents.push(<p>Loading...</p>);
   else {
-    for (const endpoint of endpoints) {
+    for (let i = endpoints.length - 1; i >= 0; i--) {
+      const endpoint = endpoints[i];
       const route = (
-        <Route exact path={endpoint.url} key={endpoint.url}>
+        <Route path={endpoint.url} key={endpoint.url}>
           {endpoint.view}
         </Route>
       );

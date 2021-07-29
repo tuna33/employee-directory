@@ -37,6 +37,7 @@ export interface DepartmentInfo {
  */
 interface EmployeeState {
   data: Employee[];
+  indices: Record<string, number>; // To get an employee's data index from its id
   isLoading: boolean; // Loading data after a fetch
   isUpdating: boolean; // Sending data for an update
 }
@@ -46,7 +47,7 @@ interface EmployeeState {
  */
 interface DepartmentState {
   data: Department[];
-  names: Record<string, string>; // To get the name of a department from its id
+  indices: Record<string, number>; // To get a department's data index from its id
   isLoading: boolean; // Loading data after a fetch
   isUpdating: boolean; // Sending data for an update
 }
