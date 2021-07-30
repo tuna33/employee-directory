@@ -2,7 +2,6 @@ import {
   Alert,
   AlertIcon,
   Box,
-  Button,
   Grid,
   Heading,
   HStack,
@@ -14,19 +13,44 @@ import React, { useState } from "react";
 import { useHistory, useParams } from "react-router-dom";
 import { DepartmentContext, EmployeeContext } from "../components/App";
 import { EmployeeCard } from "../components/Card";
-import { DeleteButtonDialog } from "../components/Dialog";
-import { DepartmentState, EmployeeState } from "../types";
+import { DeleteButtonDialog, EditButtonDialog } from "../components/Dialog";
+import { DepartmentState, EmployeeInfo, EmployeeState } from "../types";
 import { employeeBioPlaceholder } from "../utils/text";
 
-type OperationStatus = "none" | "success" | "failure" | "in progress";
+interface OperationStatus {
+  status: "none" | "success" | "failure" | "in progress";
+  action: "update" | "delete";
+}
 
 export const EmployeeView: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const history = useHistory();
-  const [deletionStatus, setDeletionStatus] = useState(
-    "none" as OperationStatus
-  );
 
+  // An operation can be either a deletion or an edit
+  // Since they're mutually exclusive (can't happen at the same time) they can share state
+  const [operationStatus, setOperationStatus] = useState({
+    status: "none",
+    action: "update",
+  } as OperationStatus);
+
+  // Pass the setter to the form so that it can prepare the replacement
+  // The edit handler will use this for update requests
+  // const [replacement, setReplacement] = useState({ id } as Employee);
+  // const getFormReplacement = () => {
+  //   const employeeIndex = employees.indices[id];
+  //   const employee = employees.data[employeeIndex];
+  //   return { info: employee.info, departmentId: employee.departmentId };
+  // };
+  // const setFormReplacement = (info: EmployeeInfo, departmentId?: string) => {
+  //   setReplacement({ id, info, departmentId });
+  // };
+
+  /**
+   * Gets the current employee's card
+   * @param employees global employee state
+   * @param departments global department state
+   * @returns EmployeeCard element for this employee
+   */
   const getEmployeeCard = (
     employees: EmployeeState,
     departments: DepartmentState
@@ -53,15 +77,22 @@ export const EmployeeView: React.FC = () => {
     return card;
   };
 
+  /**
+   * Deletes the current employee
+   * @param employees global employee state
+   */
   const deleteEmployee = (employees: EmployeeState) => {
-    setDeletionStatus("in progress");
+    setOperationStatus({ status: "in progress", action: "delete" });
     fetch(`/api/employees/${id}`, { method: "DELETE" }).then((res) => {
       if (res.status !== 200) {
-        setDeletionStatus("failure");
-        setTimeout(() => setDeletionStatus("none"), 1000);
+        setOperationStatus({ status: "failure", action: "delete" });
+        setTimeout(
+          () => setOperationStatus({ status: "none", action: "delete" }),
+          1000
+        );
         return;
       }
-      setDeletionStatus("success");
+      setOperationStatus({ status: "success", action: "delete" });
       // Delete the employee from the cache, and redirect to employees page
       employees.data = employees.data.filter((e) => e.id !== id);
       // The new data array needs all indices to be adjusted
@@ -81,28 +112,94 @@ export const EmployeeView: React.FC = () => {
     });
   };
 
+  /**
+   * Edit (update) the current employee
+   * Note: this uses the `replacement` variable for the changes
+   * It is manipulated by the edit form
+   * @param employees global employee state
+   * @param departments global department state
+   */
+  const editEmployee = (
+    employees: EmployeeState,
+    departments: DepartmentState,
+    newData: { info: EmployeeInfo; departmentId?: string }
+  ) => {
+    setOperationStatus({ status: "in progress", action: "update" });
+    fetch(`/api/employees/${id}`, {
+      method: "PUT",
+      body: JSON.stringify({
+        ...newData.info,
+        departmentId: newData.departmentId,
+      }),
+    }).then((res) => {
+      if (res.status !== 200) {
+        setOperationStatus({ status: "failure", action: "update" });
+        setTimeout(
+          () => setOperationStatus({ status: "none", action: "update" }),
+          1000
+        );
+        return;
+      }
+
+      // Only valid departments are shown on the edit form
+      // However, from the time they're rendered to when this update happens the department may have been invalidated
+      // Have department cleanup be responsible for invalidating the cache entry *first*
+      // That way, here we only have to check for its existance
+      const requestedDepartmentId = newData.departmentId;
+      if (requestedDepartmentId) {
+        if (!departments.indices[requestedDepartmentId]) {
+          // The id doesn't have a corresponding index (and thus no data entry)
+          // Operation has failed
+          setOperationStatus({ status: "failure", action: "update" });
+          setTimeout(() => {
+            setOperationStatus({ status: "none", action: "update" });
+          }, 1000);
+        }
+      }
+
+      // Update the employee on the cache **before** updating the status
+      // This is so that the new values are used on the render
+      // There's also no need to update the indices themselves, or the other employee entries
+      const employeeIndex = employees.indices[id];
+      employees.data[employeeIndex] = {
+        id: id,
+        info: newData.info,
+        departmentId: newData.departmentId,
+      };
+      setOperationStatus({ status: "success", action: "update" });
+
+      setTimeout(() => {
+        setOperationStatus({ status: "none", action: "update" });
+      }, 1000);
+    });
+  };
+
+  /**
+   * Get the status message according to the edit & delete status
+   * @returns Alert element according to status
+   */
   const getStatusMessage = () => {
-    if (deletionStatus === "none") return null;
+    if (operationStatus.status === "none") return null;
     let alert = {} as JSX.Element;
-    if (deletionStatus === "in progress") {
+    if (operationStatus.status === "in progress") {
       alert = (
         <Alert status="info">
           <AlertIcon />
-          Attempting to delete employee
+          Attempting to {operationStatus.action} employee
         </Alert>
       );
-    } else if (deletionStatus === "failure") {
+    } else if (operationStatus.status === "failure") {
       alert = (
         <Alert status="error">
           <AlertIcon />
-          Could not delete employee
+          Failed to {operationStatus.action} employee
         </Alert>
       );
-    } else if (deletionStatus === "success") {
+    } else if (operationStatus.status === "success") {
       alert = (
         <Alert status="success">
           <AlertIcon />
-          Successfully deleted employee
+          Successfully {operationStatus.action}d employee
         </Alert>
       );
     }
@@ -124,10 +221,20 @@ export const EmployeeView: React.FC = () => {
                   <VStack>
                     {getEmployeeCard(employeeData, departmentData)}
                     <HStack paddingTop="20px" spacing="5">
-                      <Button>Edit</Button>
+                      <EditButtonDialog
+                        employee={employeeData.data[employeeData.indices[id]]}
+                        departments={departmentData}
+                        onEdit={(newData: {
+                          info: EmployeeInfo;
+                          departmentId?: string;
+                        }) =>
+                          editEmployee(employeeData, departmentData, newData)
+                        }
+                        disabled={operationStatus.status !== "none"}
+                      />
                       <DeleteButtonDialog
                         onDelete={() => deleteEmployee(employeeData)}
-                        disabled={deletionStatus !== "none"}
+                        disabled={operationStatus.status !== "none"}
                       />
                     </HStack>
                   </VStack>

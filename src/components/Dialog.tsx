@@ -8,14 +8,22 @@ import {
   Button,
   Text,
 } from "@chakra-ui/react";
-import React, { RefObject } from "react";
+import React, { RefObject, useState } from "react";
+import { DepartmentState, Employee, EmployeeInfo } from "../types";
+import { EditEmployeeForm } from "./Form";
+import _ from "lodash";
 
 interface ButtonDialogProps {
   openingButton: { colorScheme: string; text: string; disabled: boolean };
   dialogHeader: { text: string };
   dialogBody: JSX.Element;
-  cancelButton: { text: string };
-  confirmButton: { colorScheme: string; text: string; handler: () => unknown };
+  cancelButton: { text: string; handler: () => unknown };
+  confirmButton: {
+    colorScheme: string;
+    text: string;
+    handler: () => unknown;
+    disabled: boolean;
+  };
 }
 
 export const ButtonToDialog: React.FC<ButtonDialogProps> = ({
@@ -35,6 +43,7 @@ export const ButtonToDialog: React.FC<ButtonDialogProps> = ({
         colorScheme={openingButton.colorScheme}
         onClick={() => setIsOpen(true)}
         isDisabled={openingButton.disabled}
+        size="lg"
       >
         {openingButton.text}
       </Button>
@@ -53,7 +62,13 @@ export const ButtonToDialog: React.FC<ButtonDialogProps> = ({
             <AlertDialogBody>{dialogBody}</AlertDialogBody>
 
             <AlertDialogFooter>
-              <Button ref={cancelRef} onClick={onClose}>
+              <Button
+                ref={cancelRef}
+                onClick={() => {
+                  onClose();
+                  cancelButton.handler();
+                }}
+              >
                 {cancelButton.text}
               </Button>
               <Button
@@ -62,6 +77,7 @@ export const ButtonToDialog: React.FC<ButtonDialogProps> = ({
                   onClose();
                   confirmButton.handler();
                 }}
+                disabled={confirmButton.disabled}
                 ml={3}
               >
                 {confirmButton.text}
@@ -83,11 +99,66 @@ export const DeleteButtonDialog: React.FC<{
       openingButton={{ colorScheme: "red", text: "Delete", disabled }}
       dialogHeader={{ text: "Delete Employee" }}
       dialogBody={<Text>Are you sure? You can&apos;t undo this action.</Text>}
-      cancelButton={{ text: "Cancel" }}
+      cancelButton={{
+        text: "Cancel",
+        handler: () => {
+          return;
+        },
+      }}
       confirmButton={{
         colorScheme: "red",
         text: "Delete",
         handler: onDelete,
+        disabled: false,
+      }}
+    />
+  );
+};
+
+export const EditButtonDialog: React.FC<{
+  employee: Employee;
+  departments: DepartmentState;
+  onEdit: (newData: { info: EmployeeInfo; departmentId?: string }) => void;
+  disabled: boolean;
+}> = ({ employee, departments, onEdit, disabled }) => {
+  const currentEmployeeData = {
+    info: employee.info,
+    departmentId: employee.departmentId,
+  };
+  const [newData, setNewData] = useState(currentEmployeeData);
+  // Pass the new data for placeholder values, and its setter to update values here
+  const departmentNames: Record<string, string> = {};
+  for (let i = 0; i < departments.data.length; i++) {
+    const department = departments.data[i];
+    departmentNames[department.id] = department.info.name;
+  }
+  const editForm = (
+    <EditEmployeeForm
+      currentData={currentEmployeeData}
+      newData={newData}
+      setNewData={setNewData}
+      departmentNames={departmentNames}
+    />
+  );
+
+  return (
+    <ButtonToDialog
+      openingButton={{ colorScheme: "gray", text: "Edit", disabled }}
+      dialogHeader={{ text: "Edit Employee" }}
+      dialogBody={editForm}
+      cancelButton={{
+        text: "Cancel",
+        handler: () => {
+          setNewData(currentEmployeeData);
+        },
+      }}
+      confirmButton={{
+        colorScheme: "green",
+        text: "Update",
+        handler: () => {
+          onEdit(newData);
+        },
+        disabled: _.isEqual(currentEmployeeData, newData),
       }}
     />
   );
