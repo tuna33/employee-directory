@@ -43,7 +43,17 @@ export const EditEmployeeForm: React.FC<EditEmployeeProps> = ({
     setter(value);
     // Prevent deletions from accidentally being interpreted as changes
     // None of the fields can be an empty string
-    let replacementInfo = resultData.info;
+    // Since info isn't string indexable, have to manually build up the replacement info
+    // It will consist of all "new" data with the specific field to be changed as the
+    const matchingEntry = Object.entries(placeholderData.info).filter(
+      ([key]) => key === name
+    )[0];
+    const matchingValue = matchingEntry[1];
+    console.log("entry:", matchingEntry);
+    let replacementInfo = {
+      ...resultData.info,
+      [name]: matchingValue,
+    };
     if (value.trim() !== "") {
       replacementInfo = { ...resultData.info, [name]: value };
     }
