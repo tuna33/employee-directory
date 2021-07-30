@@ -121,22 +121,26 @@ export const EditButtonDialog: React.FC<{
   onEdit: (newData: { info: EmployeeInfo; departmentId?: string }) => void;
   disabled: boolean;
 }> = ({ employee, departments, onEdit, disabled }) => {
+  // Prepare the result data with the current employee's data
+  // The form will use the setter to modify this state
+  // The result data is interpreted as the desired new data for this employee when confirming this dialog
   const currentEmployeeData = {
     info: employee.info,
     departmentId: employee.departmentId,
   };
-  const [newData, setNewData] = useState(currentEmployeeData);
-  // Pass the new data for placeholder values, and its setter to update values here
+  const [resultData, setResultData] = useState(currentEmployeeData);
+
   const departmentNames: Record<string, string> = {};
   for (let i = 0; i < departments.data.length; i++) {
     const department = departments.data[i];
     departmentNames[department.id] = department.info.name;
   }
+
   const editForm = (
     <EditEmployeeForm
-      currentData={currentEmployeeData}
-      newData={newData}
-      setNewData={setNewData}
+      placeholderData={currentEmployeeData}
+      resultData={resultData}
+      setResultData={setResultData}
       departmentNames={departmentNames}
     />
   );
@@ -149,16 +153,17 @@ export const EditButtonDialog: React.FC<{
       cancelButton={{
         text: "Cancel",
         handler: () => {
-          setNewData(currentEmployeeData);
+          setResultData(currentEmployeeData);
         },
       }}
       confirmButton={{
         colorScheme: "green",
         text: "Update",
         handler: () => {
-          onEdit(newData);
+          onEdit(resultData);
         },
-        disabled: _.isEqual(currentEmployeeData, newData),
+        // Do not update if the contents in the form haven't changed
+        disabled: _.isEqual(currentEmployeeData, resultData),
       }}
     />
   );

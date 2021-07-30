@@ -5,9 +5,9 @@ import React, { ChangeEvent, useState } from "react";
 import { EmployeeInfo } from "../types";
 
 interface EditEmployeeProps {
-  currentData: { info: EmployeeInfo; departmentId?: string };
-  newData: { info: EmployeeInfo; departmentId?: string };
-  setNewData: React.Dispatch<
+  placeholderData: { info: EmployeeInfo; departmentId?: string };
+  resultData: { info: EmployeeInfo; departmentId?: string };
+  setResultData: React.Dispatch<
     React.SetStateAction<{
       info: EmployeeInfo;
       departmentId: string | undefined;
@@ -16,10 +16,13 @@ interface EditEmployeeProps {
   departmentNames: Record<string, string>;
 }
 
+// This form manipulates an external state (resultData) via its setter (setResultData)
+// It takes in placeholderData to have as placeholders in each input element
+// and a map <departmentId, departmentName> to generate the valid department options
 export const EditEmployeeForm: React.FC<EditEmployeeProps> = ({
-  currentData,
-  newData,
-  setNewData,
+  placeholderData,
+  resultData,
+  setResultData,
   departmentNames,
 }) => {
   const [firstName, setFirstName] = useState("");
@@ -27,14 +30,12 @@ export const EditEmployeeForm: React.FC<EditEmployeeProps> = ({
   const [pictureUrl, setPictureUrl] = useState("");
   const [title, setTitle] = useState("");
   const [departmentId, setDepartmentId] = useState(
-    currentData.departmentId ? currentData.departmentId : ""
+    placeholderData.departmentId ? placeholderData.departmentId : ""
   );
-
-  type StateSetter = React.Dispatch<React.SetStateAction<string>>;
 
   const handleInfoChange = (
     event: ChangeEvent<HTMLInputElement>,
-    setter: StateSetter
+    setter: React.Dispatch<React.SetStateAction<string>>
   ) => {
     const target = event.target as HTMLInputElement;
     const value = target.value;
@@ -42,14 +43,14 @@ export const EditEmployeeForm: React.FC<EditEmployeeProps> = ({
     setter(value);
     // Prevent deletions from accidentally being interpreted as changes
     // None of the fields can be an empty string
-    let replacementInfo = currentData.info;
+    let replacementInfo = resultData.info;
     if (value.trim() !== "") {
-      replacementInfo = { ...currentData.info, [name]: value };
+      replacementInfo = { ...resultData.info, [name]: value };
     }
     // Sharing individual setters would be more annoying, so staying with this for now
-    setNewData({
+    setResultData({
       info: replacementInfo,
-      departmentId: currentData.departmentId,
+      departmentId: resultData.departmentId,
     });
   };
 
@@ -59,8 +60,8 @@ export const EditEmployeeForm: React.FC<EditEmployeeProps> = ({
     const internalValue = option.value;
     setDepartmentId(internalValue);
     const value = internalValue === "" ? undefined : internalValue;
-    setNewData({
-      info: newData.info,
+    setResultData({
+      info: resultData.info,
       departmentId: value,
     });
   };
@@ -83,28 +84,28 @@ export const EditEmployeeForm: React.FC<EditEmployeeProps> = ({
       <Input
         value={firstName}
         name="firstName"
-        placeholder={currentData.info.firstName}
+        placeholder={placeholderData.info.firstName}
         onChange={(event) => handleInfoChange(event, setFirstName)}
       />
       <FormLabel>Last Name</FormLabel>
       <Input
         value={lastName}
         name="lastName"
-        placeholder={currentData.info.lastName}
+        placeholder={placeholderData.info.lastName}
         onChange={(event) => handleInfoChange(event, setLastName)}
       />
       <FormLabel>Picture Url</FormLabel>
       <Input
         value={pictureUrl}
         name="pictureUrl"
-        placeholder={currentData.info.pictureUrl}
+        placeholder={placeholderData.info.pictureUrl}
         onChange={(event) => handleInfoChange(event, setPictureUrl)}
       />
       <FormLabel>Title</FormLabel>
       <Input
         value={title}
         name="title"
-        placeholder={currentData.info.title}
+        placeholder={placeholderData.info.title}
         onChange={(event) => handleInfoChange(event, setTitle)}
       />
       <FormLabel>Department</FormLabel>

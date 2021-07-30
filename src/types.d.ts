@@ -51,3 +51,18 @@ interface DepartmentState {
   isLoading: boolean; // Loading data after a fetch
   isUpdating: boolean; // Sending data for an update
 }
+
+/**
+ * An operation's status
+ */
+interface OperationStatus {
+  status: "none" | "success" | "failure" | "in progress";
+  action: "add" | "update" | "delete";
+}
+
+/**
+ * Operation status' state setter
+ */
+export type OperationStatusSetter = React.Dispatch<
+  React.SetStateAction<OperationStatus>
+>;
