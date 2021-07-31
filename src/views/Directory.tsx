@@ -1,13 +1,14 @@
-import { Grid, VStack } from "@chakra-ui/react";
+import { Grid, HStack, VStack } from "@chakra-ui/react";
 import React, { useState } from "react";
 import { DepartmentContext, EmployeeContext } from "../components/App";
 import { FormDialogButton } from "../components/Dialog";
+import { EmployeeTable } from "../components/Table";
 import { EmployeeInfo, OperationStatus } from "../types";
 import { addEmployee } from "../utils/actions";
 import { getStatusMessage } from "../utils/status";
 
 export const DirectoryView: React.FC = () => {
-  const defaultEmployeeData = {
+  const defaultEmployee = {
     id: "",
     info: {
       firstName: "Somebody",
@@ -28,25 +29,32 @@ export const DirectoryView: React.FC = () => {
       {(employeeData) => (
         <DepartmentContext.Consumer>
           {(departmentData) => (
-            <Grid margintop="50px">
+            <Grid marginTop="50px">
               <VStack>
-                <FormDialogButton
-                  employee={defaultEmployeeData}
-                  departments={departmentData.data}
-                  onSubmit={(newData: {
-                    info: EmployeeInfo;
-                    departmentId?: string;
-                  }) =>
-                    addEmployee(
-                      employeeData,
-                      departmentData,
-                      newData,
-                      setOperationStatus
-                    )
-                  }
-                  disabled={false}
-                  formType="Add"
+                <HStack>
+                  <FormDialogButton
+                    employee={defaultEmployee}
+                    departments={departmentData.data}
+                    onSubmit={(newData: {
+                      info: EmployeeInfo;
+                      departmentId?: string;
+                    }) =>
+                      addEmployee(
+                        employeeData,
+                        departmentData,
+                        newData,
+                        setOperationStatus
+                      )
+                    }
+                    disabled={false}
+                    formType="Add"
+                  />
+                </HStack>
+                <EmployeeTable
+                  employees={employeeData}
+                  departments={departmentData}
                 />
+
                 {getStatusMessage(operationStatus)}
               </VStack>
             </Grid>

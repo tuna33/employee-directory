@@ -6,6 +6,7 @@ import {
   AlertDialogHeader,
   AlertDialogOverlay,
   Button,
+  IconButton,
   Text,
 } from "@chakra-ui/react";
 import React, { RefObject, useState } from "react";
@@ -15,7 +16,12 @@ import _ from "lodash";
 import { generateDepartmentsMap } from "../utils/data";
 
 interface ButtonDialogProps {
-  openingButton: { colorScheme: string; text: string; disabled: boolean };
+  openingButton: {
+    colorScheme: string;
+    text: string;
+    disabled: boolean;
+    icon?: JSX.Element;
+  };
   dialogHeader: { text: string };
   dialogBody: JSX.Element;
   cancelButton: { text: string; handler: () => unknown };
@@ -38,16 +44,31 @@ export const ButtonToDialog: React.FC<ButtonDialogProps> = ({
   const onClose = () => setIsOpen(false);
   const cancelRef = React.useRef() as RefObject<HTMLButtonElement>;
 
+  const button = openingButton.icon ? (
+    <IconButton
+      aria-label={openingButton.text}
+      icon={openingButton.icon}
+      colorScheme={openingButton.colorScheme}
+      onClick={() => setIsOpen(true)}
+      isDisabled={openingButton.disabled}
+      size="lg"
+    >
+      {openingButton.text}
+    </IconButton>
+  ) : (
+    <Button
+      colorScheme={openingButton.colorScheme}
+      onClick={() => setIsOpen(true)}
+      isDisabled={openingButton.disabled}
+      size="lg"
+    >
+      {openingButton.text}
+    </Button>
+  );
+
   return (
     <>
-      <Button
-        colorScheme={openingButton.colorScheme}
-        onClick={() => setIsOpen(true)}
-        isDisabled={openingButton.disabled}
-        size="lg"
-      >
-        {openingButton.text}
-      </Button>
+      {button}
 
       <AlertDialog
         isOpen={isOpen}
