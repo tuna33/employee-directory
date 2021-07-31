@@ -1,4 +1,4 @@
-import { Grid, HStack, VStack } from "@chakra-ui/react";
+import { Grid, Text, VStack } from "@chakra-ui/react";
 import React, { useState } from "react";
 import { DepartmentContext, EmployeeContext } from "../components/App";
 import { FormDialogButton } from "../components/Dialog";
@@ -31,13 +31,16 @@ export const DirectoryView: React.FC = () => {
           {(departmentData) => (
             <Grid marginTop="50px">
               <VStack>
-                <HStack
+                <VStack
                   borderRadius="10px"
                   border="2px solid gray"
-                  w="50vw"
+                  w="20vw"
                   h="20vh"
+                  align="center"
                   justify="center"
+                  marginBottom="20px"
                 >
+                  <Text size="sm">Control Panel</Text>
                   <FormDialogButton
                     employee={defaultEmployee}
                     departments={departmentData.data}
@@ -55,7 +58,7 @@ export const DirectoryView: React.FC = () => {
                     disabled={false}
                     formType="Add"
                   />
-                </HStack>
+                </VStack>
                 <EmployeeTable
                   employees={employeeData}
                   departments={departmentData}

@@ -1,6 +1,6 @@
 import { DeleteIcon, EditIcon, SearchIcon } from "@chakra-ui/icons";
 import { HStack, IconButton, Td, Tfoot } from "@chakra-ui/react";
-import { Table, TableCaption, Tbody, Th, Thead, Tr } from "@chakra-ui/table";
+import { Table, Tbody, Th, Thead, Tr } from "@chakra-ui/table";
 import React from "react";
 import { Link, useHistory } from "react-router-dom";
 import {
@@ -107,7 +107,6 @@ export const EmployeeTable: React.FC<{
 
   return (
     <Table w="60vw">
-      <TableCaption placement="top">Employees List</TableCaption>
       <Thead>{tableInfo}</Thead>
       <Tbody>{employeeTableRows}</Tbody>
       <Tfoot>{tableInfo}</Tfoot>

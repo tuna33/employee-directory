@@ -171,7 +171,12 @@ export const FormDialogButton: React.FC<FormDialogButtonProps> = ({
   );
   return (
     <ButtonToDialog
-      openingButton={{ colorScheme: "gray", text: formType, disabled, icon }}
+      openingButton={{
+        colorScheme: "gray",
+        text: formType === "Add" ? "Add Employee" : formType,
+        disabled,
+        icon,
+      }}
       dialogHeader={{ text: `${formType} Employee` }}
       dialogBody={form}
       cancelButton={{

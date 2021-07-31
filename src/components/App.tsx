@@ -2,7 +2,6 @@ import { ChakraProvider, Grid } from "@chakra-ui/react";
 import React, { useEffect, useState } from "react";
 import { BrowserRouter, Route, Switch } from "react-router-dom";
 import { Department, DepartmentState, Employee, EmployeeState } from "../types";
-import { DepartmentsView } from "../views/Departments";
 import { DirectoryView } from "../views/Directory";
 import { EmployeesView } from "../views/Employees";
 import { Nav } from "./Nav";
@@ -84,7 +83,7 @@ const App: React.FC = () => {
       view: <DirectoryView />,
     },
     { name: "Employees", url: "/employees", view: <EmployeesView /> },
-    { name: "Departments", url: "/departments", view: <DepartmentsView /> },
+    // { name: "Departments", url: "/departments", view: <DepartmentsView /> },
   ];
 
   const switchContents = [];
