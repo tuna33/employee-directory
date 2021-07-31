@@ -9,9 +9,10 @@ import {
   Text,
 } from "@chakra-ui/react";
 import React, { RefObject, useState } from "react";
-import { DepartmentState, Employee, EmployeeInfo } from "../types";
-import { EditEmployeeForm } from "./Form";
+import { Department, Employee, EmployeeInfo } from "../types";
+import { EmployeeForm } from "./Form";
 import _ from "lodash";
+import { generateDepartmentsMap } from "../utils/data";
 
 interface ButtonDialogProps {
   openingButton: { colorScheme: string; text: string; disabled: boolean };
@@ -115,41 +116,40 @@ export const DeleteButtonDialog: React.FC<{
   );
 };
 
-export const EditButtonDialog: React.FC<{
+interface FormDialogButtonProps {
   employee: Employee;
-  departments: DepartmentState;
-  onEdit: (newData: { info: EmployeeInfo; departmentId?: string }) => void;
+  departments: Department[];
+  onSubmit: (newData: { info: EmployeeInfo; departmentId?: string }) => void;
   disabled: boolean;
-}> = ({ employee, departments, onEdit, disabled }) => {
-  // Prepare the result data with the current employee's data
-  // The form will use the setter to modify this state
-  // The result data is interpreted as the desired new data for this employee when confirming this dialog
+  formType: "Edit" | "Add";
+}
+
+export const FormDialogButton: React.FC<FormDialogButtonProps> = ({
+  employee,
+  departments,
+  onSubmit,
+  disabled,
+  formType,
+}) => {
   const currentEmployeeData = {
     info: employee.info,
     departmentId: employee.departmentId,
   };
   const [resultData, setResultData] = useState(currentEmployeeData);
-
-  const departmentNames: Record<string, string> = {};
-  for (let i = 0; i < departments.data.length; i++) {
-    const department = departments.data[i];
-    departmentNames[department.id] = department.info.name;
-  }
-
-  const editForm = (
-    <EditEmployeeForm
+  const departmentNames = generateDepartmentsMap(departments);
+  const form = (
+    <EmployeeForm
       placeholderData={currentEmployeeData}
       resultData={resultData}
       setResultData={setResultData}
       departmentNames={departmentNames}
     />
   );
-
   return (
     <ButtonToDialog
-      openingButton={{ colorScheme: "gray", text: "Edit", disabled }}
-      dialogHeader={{ text: "Edit Employee" }}
-      dialogBody={editForm}
+      openingButton={{ colorScheme: "gray", text: formType, disabled }}
+      dialogHeader={{ text: `${formType} Employee` }}
+      dialogBody={form}
       cancelButton={{
         text: "Cancel",
         handler: () => {
@@ -158,12 +158,15 @@ export const EditButtonDialog: React.FC<{
       }}
       confirmButton={{
         colorScheme: "green",
-        text: "Update",
+        text: formType === "Edit" ? "Update" : "Add",
         handler: () => {
-          onEdit(resultData);
+          onSubmit(resultData);
         },
-        // Do not update if the contents in the form haven't changed
-        disabled: _.isEqual(currentEmployeeData, resultData),
+        // Do not update if the contents in the form haven't changed (Edit only)
+        disabled:
+          formType === "Add"
+            ? false
+            : _.isEqual(currentEmployeeData, resultData),
       }}
     />
   );

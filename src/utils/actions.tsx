@@ -1,6 +1,7 @@
 import React from "react";
 import {
   DepartmentState,
+  Employee,
   EmployeeInfo,
   EmployeeState,
   OperationStatusSetter,
@@ -117,7 +118,61 @@ export const editEmployee = (
   });
 };
 
-// TODO: add addEmployee here
+export const addEmployee = (
+  employees: EmployeeState,
+  departments: DepartmentState,
+  newData: { info: EmployeeInfo; departmentId?: string },
+  setOperationStatus: OperationStatusSetter
+): void => {
+  setOperationStatus({ status: "in progress", action: "add" });
+  fetch(`/api/employees/`, {
+    method: "POST",
+    body: JSON.stringify({
+      ...newData.info,
+      departmentId: newData.departmentId,
+    }),
+  }).then((res) => {
+    if (res.status !== 201) {
+      setOperationStatus({ status: "failure", action: "add" });
+      setTimeout(
+        () => setOperationStatus({ status: "none", action: "add" }),
+        1000
+      );
+      return;
+    }
+
+    // Only valid departments are shown on the edit form
+    // However, from the time they're rendered to when this update happens the department may have been invalidated
+    // Have department cleanup be responsible for invalidating the cache entry *first*
+    // That way, here we only have to check for its existance
+    const requestedDepartmentId = newData.departmentId;
+    if (requestedDepartmentId) {
+      if (!departments.indices[requestedDepartmentId]) {
+        // The id doesn't have a corresponding index (and thus no data entry)
+        // Operation has failed
+        setOperationStatus({ status: "failure", action: "update" });
+        setTimeout(() => {
+          setOperationStatus({ status: "none", action: "update" });
+        }, 1000);
+      }
+    }
+
+    // Need to get the id assigned to this employee by the server to store it in the cache
+    res.json().then((json) => {
+      const employee = json.employee as Employee;
+      const employeeIndex = employees.data.push(employee) - 1;
+      employees.indices[employee.id] = employeeIndex;
+
+      // Update the employee on the cache **before** updating the status
+      // This is so that the new values are used on the render
+      setOperationStatus({ status: "success", action: "update" });
+
+      setTimeout(() => {
+        setOperationStatus({ status: "none", action: "update" });
+      }, 1000);
+    });
+  });
+};
 
 /**
  * Gets an employee's card

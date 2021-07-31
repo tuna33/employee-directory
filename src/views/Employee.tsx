@@ -2,7 +2,7 @@ import { Grid, Heading, HStack, Text, VStack, Wrap } from "@chakra-ui/react";
 import React, { useState } from "react";
 import { useHistory, useParams } from "react-router-dom";
 import { DepartmentContext, EmployeeContext } from "../components/App";
-import { DeleteButtonDialog, EditButtonDialog } from "../components/Dialog";
+import { DeleteButtonDialog, FormDialogButton } from "../components/Dialog";
 import {
   DepartmentState,
   EmployeeInfo,
@@ -56,10 +56,10 @@ export const EmployeeView: React.FC = () => {
           <VStack>
             {getEmployeeCard(employeeData, departmentData, id)}
             <HStack paddingTop="20px" spacing="5">
-              <EditButtonDialog
+              <FormDialogButton
                 employee={employeeData.data[employeeData.indices[id]]}
-                departments={departmentData}
-                onEdit={(newData: {
+                departments={departmentData.data}
+                onSubmit={(newData: {
                   info: EmployeeInfo;
                   departmentId?: string;
                 }) =>
@@ -71,6 +71,7 @@ export const EmployeeView: React.FC = () => {
                     setOperationStatus
                   )
                 }
+                formType="Edit"
                 disabled={operationStatus.status !== "none"}
               />
               <DeleteButtonDialog

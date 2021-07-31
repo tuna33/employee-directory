@@ -1,4 +1,4 @@
-import { EmployeeInfo } from "../types";
+import { Department, EmployeeInfo } from "../types";
 
 /**
  * Some titles/job positions
@@ -61,4 +61,18 @@ export const getRandomEmployeesInfo = async (
     })
     .catch((e) => console.error("Error while getting random user data:", e));
   return result;
+};
+
+/**
+ * Generates a <id, name> map for departments
+ */
+export const generateDepartmentsMap = (
+  departments: Department[]
+): Record<string, string> => {
+  const departmentNames: Record<string, string> = {};
+  for (let i = 0; i < departments.length; i++) {
+    const department = departments[i];
+    departmentNames[department.id] = department.info.name;
+  }
+  return departmentNames;
 };
