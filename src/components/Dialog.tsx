@@ -51,7 +51,7 @@ export const ButtonToDialog: React.FC<ButtonDialogProps> = ({
       colorScheme={openingButton.colorScheme}
       onClick={() => setIsOpen(true)}
       isDisabled={openingButton.disabled}
-      size="lg"
+      size="sm"
     >
       {openingButton.text}
     </IconButton>
@@ -115,10 +115,11 @@ export const ButtonToDialog: React.FC<ButtonDialogProps> = ({
 export const DeleteButtonDialog: React.FC<{
   onDelete: () => unknown;
   disabled: boolean;
-}> = ({ onDelete, disabled }) => {
+  icon?: JSX.Element;
+}> = ({ onDelete, disabled, icon }) => {
   return (
     <ButtonToDialog
-      openingButton={{ colorScheme: "red", text: "Delete", disabled }}
+      openingButton={{ colorScheme: "red", text: "Delete", disabled, icon }}
       dialogHeader={{ text: "Delete Employee" }}
       dialogBody={<Text>Are you sure? You can&apos;t undo this action.</Text>}
       cancelButton={{
@@ -143,6 +144,7 @@ interface FormDialogButtonProps {
   onSubmit: (newData: { info: EmployeeInfo; departmentId?: string }) => void;
   disabled: boolean;
   formType: "Edit" | "Add";
+  icon?: JSX.Element;
 }
 
 export const FormDialogButton: React.FC<FormDialogButtonProps> = ({
@@ -151,6 +153,7 @@ export const FormDialogButton: React.FC<FormDialogButtonProps> = ({
   onSubmit,
   disabled,
   formType,
+  icon,
 }) => {
   const currentEmployeeData = {
     info: employee.info,
@@ -168,7 +171,7 @@ export const FormDialogButton: React.FC<FormDialogButtonProps> = ({
   );
   return (
     <ButtonToDialog
-      openingButton={{ colorScheme: "gray", text: formType, disabled }}
+      openingButton={{ colorScheme: "gray", text: formType, disabled, icon }}
       dialogHeader={{ text: `${formType} Employee` }}
       dialogBody={form}
       cancelButton={{

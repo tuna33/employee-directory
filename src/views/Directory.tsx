@@ -31,7 +31,13 @@ export const DirectoryView: React.FC = () => {
           {(departmentData) => (
             <Grid marginTop="50px">
               <VStack>
-                <HStack>
+                <HStack
+                  borderRadius="10px"
+                  border="2px solid gray"
+                  w="50vw"
+                  h="20vh"
+                  justify="center"
+                >
                   <FormDialogButton
                     employee={defaultEmployee}
                     departments={departmentData.data}
@@ -53,6 +59,8 @@ export const DirectoryView: React.FC = () => {
                 <EmployeeTable
                   employees={employeeData}
                   departments={departmentData}
+                  operationStatus={operationStatus}
+                  setOperationStatus={setOperationStatus}
                 />
 
                 {getStatusMessage(operationStatus)}

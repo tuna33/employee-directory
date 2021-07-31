@@ -19,7 +19,7 @@ export const deleteEmployee = (
   employees: EmployeeState,
   employeeId: string,
   setOperationStatus: OperationStatusSetter,
-  redirect: (path: string) => unknown
+  redirect: () => unknown
 ): void => {
   setOperationStatus({ status: "in progress", action: "delete" });
   fetch(`/api/employees/${employeeId}`, { method: "DELETE" }).then((res) => {
@@ -46,7 +46,9 @@ export const deleteEmployee = (
     }
     employees.indices = indices;
     setTimeout(() => {
-      redirect("/employees");
+      // Caller will configure what endpoint to redirect to
+      redirect();
+      setOperationStatus({ status: "none", action: "delete" });
     }, 1000);
   });
 };

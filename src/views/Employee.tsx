@@ -76,8 +76,8 @@ export const EmployeeView: React.FC = () => {
               />
               <DeleteButtonDialog
                 onDelete={() =>
-                  deleteEmployee(employeeData, id, setOperationStatus, (path) =>
-                    history.push(path)
+                  deleteEmployee(employeeData, id, setOperationStatus, () =>
+                    history.push("/employees")
                   )
                 }
                 disabled={operationStatus.status !== "none"}
